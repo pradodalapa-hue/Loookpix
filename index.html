@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRENSA JDP INDUSTRIAL - DONYPAY</title>
+   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { 
+            --bg: #1a1a00; 
+            --card: #fffae6; 
+            --accent: #9333ea; /* Lilás de alta intensidade */
+            --accent-hover: #7e22ce;
+            --text: #1a1a00; 
+        }
+        body { 
+            background: radial-gradient(circle at top center, #ffeb66 0%, #ffd700 50%, #cca100 100%); 
+            color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { 
+            max-width: 400px; 
+            width: 100%;
+            margin: auto; 
+            background: var(--card); 
+            padding: 25px; 
+            border-radius: 20px; 
+            border: 2px solid #cca100; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #1a1a00; 
+            font-size: 1.3rem; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+        
+        .valor-input { 
+            width: 100%; 
+            padding: 15px; 
+            background: #ffffff; 
+            border: 2px solid #cca100; 
+            color: #1a1a00; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 1.3rem; 
+            font-weight: bold;
+            margin-bottom: 15px; 
+            text-align: center;
+        }
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
+        button { 
+            background: #ffffff; 
+            border: 2px solid #cca100; 
+            color: #1a1a00; 
+            padding: 12px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 900; 
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #ffecb3;
+        }
+        .btn-principal { 
+            width: 100%; 
+            padding: 15px; 
+            background: var(--accent); 
+            color: #ffffff; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 900; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+        }
+        .btn-principal:hover {
+            background: var(--accent-hover);
+        }
+        
+        #pagamento-area { 
+            display: none; 
+            margin-top: 25px; 
+            border-top: 2px dashed #cca100; 
+            padding-top: 20px; 
+        }
+        
+        .pix-flex { 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 15px; 
+            margin-bottom: 15px; 
+        }
+        #qr-box { 
+            background: white; 
+            padding: 8px; 
+            width: 110px; 
+            height: 110px; 
+            border-radius: 10px; 
+            border: 2px solid #cca100;
+            flex-shrink: 0; 
+        }
+        #qr-box img { width: 100%; height: 100%; }
+        .instrucoes { font-size: 0.8rem; color: #4a3800; line-height: 1.4; font-weight: 600; }
+        
+        .pix-code { 
+            background: #ffffff; 
+            padding: 12px; 
+            border: 2px solid #cca100; 
+            font-size: 0.7rem; 
+            color: #4a3800; 
+            word-break: break-all; 
+            margin: 15px 0; 
+            border-radius: 10px; 
+            font-family: monospace;
+            font-weight: bold;
+        }
+        .timer { color: var(--accent); font-size: 1rem; text-align: center; margin-top: 15px; font-weight: 900; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🛡️ DONY BURGUER'S PIX</h1>
+    <input type="number" id="valorManual" class="valor-input" placeholder="R$ 0,00">
+    
+    <div class="grid">
+        <button onclick="setValor(20)">R$ 20</button>
+        <button onclick="setValor(50)">R$ 50</button>
+        <button onclick="setValor(100)">R$ 100</button>
+    </div>
+    
+    <button class="btn-principal" onclick="gerarPix()">DEPOSITAR COM PIX</button>
+
+    <div id="pagamento-area">
+        <h3 style="text-align: center; color: var(--accent); margin-top: 0; font-weight: 900; text-transform: uppercase; font-size: 0.9rem;">Finalize seu pagamento</h3>
+        
+        <div class="pix-flex">
+            <div id="qr-box"></div>
+            <div class="instrucoes">
+                <strong>Escaneie o QR Code</strong><br>
+                com o app do seu banco ou <strong>copie o código Pix</strong>.<br><br>
+                1. Abra o app<br>2. Escaneie<br>3. Confirme
+            </div>
+        </div>
+        
+        <div id="pix-texto" class="pix-code"></div>
+        <button id="btnCopiar" class="btn-principal" onclick="copiarPix()">📋 COPIAR CÓDIGO PIX</button>
+        <div class="timer" id="timer">Tempo restante: 05:00</div>
+    </div>
+</div>
+
+<script>
+    const CHAVE = "70945887205";
+    const NOME = "JOSE DIVINOPRADODALAPA";
+    const CIDADE = "MANAUS";
+
+    function setValor(v) { document.getElementById('valorManual').value = v; }
+
+    function gerarPayload(valor) {
+        const f = (id, v) => id + v.length.toString().padStart(2, '0') + v;
+        const vStr = valor.toFixed(2);
+        let p = "000201" + f("26", f("00", "br.gov.bcb.pix") + f("01", CHAVE)) + "520400005303986" + f("54", vStr) + "5802BR" + f("59", NOME.substring(0,25)) + f("60", CIDADE.substring(0,15)) + "62070503***6304";
+        let crc = 0xFFFF;
+        for (let i = 0; i < p.length; i++) {
+            crc ^= (p.charCodeAt(i) << 8);
+            for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
+        }
+        return p + (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function iniciarTimer(duracaoEmSegundos) {
+        let timer = duracaoEmSegundos;
+        const display = document.getElementById('timer');
+        if(window.timerInterval) clearInterval(window.timerInterval);
+        window.timerInterval = setInterval(() => {
+            let minutos = parseInt(timer / 60, 10);
+            let segundos = parseInt(timer % 60, 10);
+            minutos = minutos < 10 ? "0" + minutos : minutos;
+            segundos = segundos < 10 ? "0" + segundos : segundos;
+            display.innerText = "Tempo restante: " + minutos + ":" + segundos;
+            if (--timer < 0) {
+                clearInterval(window.timerInterval);
+                display.innerText = "Código expirado!";
+            }
+        }, 1000);
+    }
+
+    function gerarPix() {
+        const v = parseFloat(document.getElementById('valorManual').value);
+        if(!v || v <= 0) return;
+        const pix = gerarPayload(v);
+        document.getElementById('pagamento-area').style.display = 'block';
+        document.getElementById('qr-box').innerHTML = "";
+        new QRCode(document.getElementById('qr-box'), { text: pix, width: 110, height: 110 });
+        document.getElementById('pix-texto').innerText = pix;
+        iniciarTimer(300); 
+    }
+
+    function copiarPix() {
+        const t = document.getElementById('pix-texto');
+        const range = document.createRange();
+        range.selectNode(t);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+
+        const btn = document.getElementById('btnCopiar');
+        btn.innerText = "✅ COPIADO!";
+        btn.style.background = "#1a1a00";
+        btn.style.color = "#ffd700";
+        setTimeout(() => {
+            btn.innerText = "📋 COPIAR CÓDIGO PIX";
+            btn.style.background = "#9333ea";
+            btn.style.color = "#ffffff";
+        }, 2000);
+    }
+</script>
+</body>
+</html>
